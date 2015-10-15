@@ -1,0 +1,33 @@
+{
+  "name": "",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "babel-node server",
+    "schema": "babel-node scripts/compile-schema"
+  },
+  "repository": "",
+  "author": "Erin Dachtler <download333@gmail.com>",
+  "dependencies": {
+    "babel": "^5.8.23",
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "express-graphql": "^0.4.0",
+    "graphql": "^0.4.7",
+    "graphql-relay": "^0.3.2",
+    "history": "^1.12.5",
+    "jsonwebtoken": "^5.4.0"
+  },
+  "devDependencies": {
+    "babel-core": "^5.8.25",
+    "babel-loader": "^5.3.2",
+    "babel-relay-plugin": "^0.2.6",
+    "react": "^0.14.0",
+    "react-dom": "^0.14.0",
+    "react-relay": "^0.3.2",
+    "react-router": "^1.0.0-rc1",
+    "react-router-relay": "^0.6.2",
+    "webpack": "^1.12.2"
+  }
+}

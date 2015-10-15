@@ -1,0 +1,123 @@
+html, body {
+	padding: 0;
+	margin: 0;
+	font-family: 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+button {
+	padding: 5px 10px;
+	border: 0;
+	border-radius: 5px;
+	background-color: #FF5517;
+	font-size: 1.2rem;
+	outline: 0;
+	cursor: pointer;
+}
+button:disabled {
+	color: #666;
+	background-color: #FD865A;
+	cursor: default;
+}
+
+
+.sitenav {
+	font-size: 1.2rem;
+	max-width: 960px;
+	margin: 0 auto;
+}
+.sitenav a {
+	display: inline-block;
+	text-decoration: none;
+	color: #555;
+	padding: 20px 10px;
+}
+.sitenav a:hover {
+	color: #888;
+}
+.sitenav a.active {
+	background-color: #45d;
+}
+
+.auth-controls {
+	float: right;
+}
+
+.siteheader {
+	text-align: center;
+	background-color: #f64;
+	padding: 60px 10px;
+}
+.siteheader > h1 {
+	margin: 0;
+	font-size: 2rem;
+	margin-bottom: 1rem;
+}
+.siteheader > div {
+	font-size: 1.2rem;
+}
+
+
+.login {
+	margin: 0 auto;
+	width: 300px;
+	padding: 10px;
+}
+
+.login > input {
+	display: block;
+	font-size: 1.2rem;
+	box-sizing: border-box;
+	width: 100%;
+	margin-bottom: 10px;
+}
+
+
+.poll-creator {
+	text-align: center;
+	width: 320px;
+	margin: 0 auto;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.poll-creator > h2 {
+	font-size: 1.2rem;
+	margin: 0.6rem 0;
+	width: 100%;
+}
+
+.poll-creator > input {
+	display: block;
+	width: 100%;
+	margin: 0.6rem 0;
+	border: 0;
+	outline: 0;
+	border-bottom: solid 2px #555;
+	font-size: 1.1rem;
+}
+
+.poll-creator > button {
+	display: block;
+	margin: 0.2rem auto;
+	font-size: 0.9rem;
+}
+
+
+.sitehome {
+	text-align: center;
+	max-width: 960px;
+	margin: 0 auto;
+}
+
+.poll-card {
+	display: inline-block;
+	margin: 20px;
+}
+
+.poll-card > h3 {
+	text-align: center;
+}
+
+.poll-card > div {
+	text-align: left;
+}
