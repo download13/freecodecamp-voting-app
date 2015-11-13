@@ -1,49 +1,71 @@
 import React, {Component} from 'react';
-import fetch from 'isomorphic-fetch';
+import {bindActionCreators} from 'redux';
+import {connect} from 'react-redux';
+import {replaceState} from 'redux-router';
+
+import actions from '../state/actions';
 
 
-export default class Login extends Component {
+class Login extends Component {
 	constructor() {
 		super();
 		
-		this.state = {};
-		
 		this.login = this.login.bind(this);
+		this.formSubmit = this.formSubmit.bind(this);
 	}
 	
 	render() {
-		const {error} = this.state;
-		const user = {
-			id: '543534fads',
-			username: 'download13'
-		};
+		let {error} = this.props;
 		
 		return <div className="login">
-			<div>{error}</div>
-			<input ref="user" placeholder="Username" />
-			<input ref="pass" placeholder="Password" type="password" />
-			<button onClick={this.login}>Login</button>
-			<button onClick={this.login}>Sign Up</button>
+			<h2>Login or Sign Up</h2>
+			<div className="error">{error}</div>
+			<input ref="user" placeholder="Username" onKeyDown={this.formSubmit} />
+			<input ref="pass" placeholder="Password" onKeyDown={this.formSubmit} type="password" />
+			<button onClick={this.login}>Login</button>&nbsp;
+			<button onClick={this.login}>Create Account</button>
 		</div>;
 	}
 	
+	formSubmit(e) {
+		if(e.keyCode === 13) {
+			this.login();
+		}
+	}
+	
 	login() {
-		// TODO: Error check form fields
-		const username = this.refs.user.value;
-		const password = this.refs.pass.value;
-		// POST to /login and get back a token or an error code
-		fetch('/login', {
-			method: 'post',
-			body: {username, password}
-		})
-		.then(res => res.text())
-		.then(token => {
-			// TODO: Store token in local store for use with graphql calls
-			console.log(token);
-		}, err => {
-			// TODO: show an error message
-			console.log('err', err)
-			this.setState({error: err.toString()});
-		});
+		let {onLogin} = this.props;
+		let {user, pass} = this.refs;
+		
+		onLogin(user.value || null, pass.value || null);
+	}
+	
+	componentWillReceiveProps(newProps) {
+		let {token, navTo, location} = this.props;
+		
+		if(!this.props.token && newProps.token) {
+			let nextPath = '/dashboard';
+			if(location && location.state && location.state.nextPath) {
+				nextPath = location.state.nextPath;
+			}
+			// TODO: This should be in the action creator
+			navTo(null, nextPath);
+		}
 	}
 }
+
+export default connect(
+	({auth, router}) => {
+		return {
+			error: auth.error,
+			token: auth.token,
+			location: router.location
+		};
+	},
+	dispatch => {
+		return {
+			onLogin: bindActionCreators(actions.login, dispatch),
+			navTo: bindActionCreators(replaceState, dispatch)
+		};
+	}
+)(Login);

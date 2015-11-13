@@ -5,13 +5,17 @@ html, body {
 }
 
 button {
-	padding: 5px 10px;
+	padding: 7px 10px;
 	border: 0;
 	border-radius: 5px;
 	background-color: #FF5517;
+	transition: background-color 70ms;
 	font-size: 1.2rem;
 	outline: 0;
 	cursor: pointer;
+}
+button:hover {
+	background-color: #FF4704;
 }
 button:disabled {
 	color: #666;
@@ -24,45 +28,40 @@ button:disabled {
 	font-size: 1.2rem;
 	max-width: 960px;
 	margin: 0 auto;
+	background-color: rgba(250, 250, 250, 0.8);
 }
 .sitenav a {
 	display: inline-block;
 	text-decoration: none;
 	color: #555;
-	padding: 20px 10px;
+	line-height: 58px;
+	vertical-align: middle;
+	padding: 0 10px;
+}
+.sitenav a img {
+	vertical-align: middle;
 }
 .sitenav a:hover {
 	color: #888;
 }
 .sitenav a.active {
-	background-color: #45d;
+	background-color: #FFC799;
 }
 
 .auth-controls {
 	float: right;
 }
 
-.siteheader {
-	text-align: center;
-	background-color: #f64;
-	padding: 60px 10px;
-}
-.siteheader > h1 {
-	margin: 0;
-	font-size: 2rem;
-	margin-bottom: 1rem;
-}
-.siteheader > div {
-	font-size: 1.2rem;
-}
-
 
 .login {
 	margin: 0 auto;
-	width: 300px;
+	width: 320px;
 	padding: 10px;
+	box-sizing: border-box;
 }
-
+.login > .error {
+	color: red;
+}
 .login > input {
 	display: block;
 	font-size: 1.2rem;
@@ -103,21 +102,134 @@ button:disabled {
 }
 
 
-.sitehome {
+.sitemain {
 	text-align: center;
 	max-width: 960px;
 	margin: 0 auto;
 }
 
+
+.home-header {
+	text-align: center;
+	background-color: #f64;
+	padding: 60px 10px;
+}
+.home-header > h1 {
+	margin: 0;
+	font-size: 2rem;
+	margin-bottom: 1rem;
+}
+.home-header > div {
+	font-size: 1.2rem;
+}
+
+.pitch {
+	display: flex;
+}
+.pitch-card {
+	display: flex;
+	flex-direction: column;
+	width: 32.3%;
+	padding: 20px 10px 10px 10px;
+	align-items: center;
+	justify-content: space-around;
+}
+.pitch-card__text {
+	margin: 0;
+	color: gray;
+	font-size: 1.3rem;
+}
+
+.get-started {
+	text-align: center;
+	padding: 50px 0;
+}
+.get-started__button {
+	padding: 10px 15px;
+	border-radius: 5px;
+	background-color: #FF5517;
+	transition: background-color 70ms;
+	font-size: 1.2rem;
+	color: black;
+	text-decoration: none;
+}
+.get-started__button:hover {
+	background-color: #FF4704;
+}
+
+
 .poll-card {
 	display: inline-block;
 	margin: 20px;
+	width: 240px;
 }
 
 .poll-card > h3 {
 	text-align: center;
 }
 
-.poll-card > div {
-	text-align: left;
+.poll-card-answers {
+	position: relative;
+	height: 240px;
+	width: 240px;
+}
+
+.poll-card-legend {
+	margin: 10px;
+}
+
+.legend-color {
+	display: inline-block;
+	width: 25px;
+	height: 25px;
+	vertical-align: middle;
+	margin: 3px;
+}
+
+.poll-card.selectable tr:hover .legend-color {
+	border: 3px black solid;
+	margin: 0;
+}
+.poll-card.selectable tr:hover {
+	cursor: pointer;
+}
+
+
+.dash-polls {
+	display: flex;
+	flex-direction: column;
+}
+
+.dash-poll {
+	border: 3px solid #555;
+	padding: 20px 0;
+	margin: 5px auto;
+	min-width: 600px;
+	border-radius: 10px;
+}
+
+
+.poll-picker {
+	display: flex;
+	flex-direction: column;
+	padding: 30px;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+.poll-picker__answers {
+	display: flex;
+	flex-direction: column;
+	align-self: center;
+	align-items: flex-start;
+}
+
+.poll-display {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.poll-display input {
+	width: 400px;
 }

@@ -1,38 +1,38 @@
 import React, {Component} from 'react';
-import Relay from 'react-relay'
-
-import Auth from '../components/auth';
-import PollCard from '../components/poll-card';
+import {Link} from 'react-router';
 
 
-class Home extends Component {
+const PitchCard = ({image, text}) => {
+	return <div className="pitch-card">
+		<img src={image} />
+		<h2 className="pitch-card__text">{text}</h2>
+	</div>;
+};
+
+export default class Home extends Component {
 	render() {
-		let {
-			polls,
-		} = this.props;
-
-		return <div className="sitehome">
-			{polls.map(poll => {
-				// TODO
-				return <PollCard key={poll.id} {...poll} />;
-			})}
+		return <div>
+			<header className="home-header">
+				<h1>VoteFire</h1>
+				<div>Public Opinion Tracking</div>
+			</header>
+			<section className="pitch">
+				<PitchCard
+					image="/images/ballot.png"
+					text="Create a poll"
+				/>
+				<PitchCard
+					image="/images/polling.png"
+					text="Vote on other polls"
+				/>
+				<PitchCard
+					image="/images/earth.png"
+					text="Learn about opinions from around the world"
+				/>
+			</section>
+			<section className="get-started">
+				<Link className="get-started__button" to="/dashboard">Get Started</Link>
+			</section>
 		</div>;
 	}
 }
-
-
-export default Relay.createContainer(Home, {
-	fragments: {
-		polls: () => Relay.QL`fragment on Polls {
-			hot {
-				id
-				question
-				answers {
-					text
-					color
-					votes
-				}
-			}
-		}`
-	}
-});

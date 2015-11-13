@@ -1,7 +1,11 @@
 import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
+
+import actions from '../state/actions';
 
 
-export default class PollCreator extends Component {
+class CreatePoll extends Component {
 	constructor() {
 		super();
 		
@@ -31,7 +35,7 @@ export default class PollCreator extends Component {
 			if(!answers[i]) {
 				saveDisabled = true;
 			}
-
+			
 			let placeholder;
 			switch(i) {
 				case 0:
@@ -95,21 +99,29 @@ export default class PollCreator extends Component {
 		
 		if(onCreate) {
 			onCreate({
-				question,
-				answers
-			}, err => {
-				if(err) {
-					// TODO: Display error
-				} else {
-					// Everything went fine, clear
-					this.setState({
-						question: null,
-						answers: ['', '']
-					});
-				}
+				question, // TODO: Add color selector
+				answers: answers.map(text => ({text, color: getRandomColor()}))
+			});
+			
+			// Assume everything went fine, clear
+			this.setState({
+				question: null,
+				answers: ['', '']
 			});
 		}
 	}
 }
 
-export default PollCreator;
+export default connect(
+	null,
+	dispatch => {
+		return {
+			onCreate: bindActionCreators(actions.createPoll, dispatch)
+		};
+	}
+)(CreatePoll);
+
+
+function getRandomColor() {
+	return `hsl(${Math.floor(Math.random() * 360)},100%,60%)`;
+}

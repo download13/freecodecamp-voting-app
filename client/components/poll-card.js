@@ -1,86 +1,78 @@
 import React, {Component} from 'react';
 
 
-class PollCard extends Component {
-	constructor() {
-		super();
-		
-		this.state = {
-			className: `poll-card-${Math.random().toString(36).substr(2)}`
-		};
-	}
-	
-	// TODO: rerender the pie chart
+export default class PollCard extends Component {
 	render() {
-		const {
+		let {
+			poll,
+			onSelect
+		} = this.props;
+		
+		let {
 			question,
 			answers,
-		} = this.props;
-		const {className} = this.state;
+		} = poll;
 		
 		const style = {
 			width: '280px',
-			height: '280px',
+			height: '280px'
 		};
 		
 		const marginPercent = 10; // percent of x axis space that will be margin
 		const marginWidth = marginPercent / (answers.length + 1);
-		const width = (100 - marginWidth) / answers.length;
+		const width = (100 - marginWidth * (answers.length + 1)) / answers.length;
 		const widthText = `${width}%`;
+		
+		const voteInfo = answers.reduce((acc, item) => {
+			acc.total += item.votes;
+			
+			if(item.votes > acc.greatest) {
+				acc.greatest = item.votes;
+			}
+			
+			return acc;
+		}, {total: 0, greatest: 0});
+		
 		let left = marginWidth;
-		const answerEls = answers.map(answer => {
-			const el = <div style={{
+		const scale = voteInfo.greatest / voteInfo.total;
+		
+		const answerEls = answers.map(({text, color, votes}, i) => {
+			let heightPercent = (votes / voteInfo.total) * 100 / scale;
+			if(heightPercent < 1) {
+				heightPercent = 1;
+			}
+			
+			const el = <div key={`answer${i}`} style={{
 				position: 'absolute',
 				bottom: 0,
-				backgroundColor: getRandomColor(),
+				textAlign: 'center',
+				fontWeight: 'bold',
+				backgroundColor: color,
 				width: widthText,
+				height: `${heightPercent}%`,
 				left: `${left}%`,
-			}}></div>;
+			}}>{votes}</div>;
 			
 			left += width + marginWidth;
 			
 			return el;
 		});
 		
-		return <div className="poll-card">
-			<h3>{question}</h3>
-			<div className={className} style={style} answers={answers}></div>
-			{answerEls}
-		</div>;
-	}
-	
-	componentDidMount() {
-		const {answers} = this.props;
-		const {className} = this.state;
-		
-		const labels = [];
-		const series = [];
-		const colors = [];
-		
-		answers.forEach(({text, votes, color}) => {
-			series.push(votes);
-			labels.push(text);
-			colors.push(color);
+		const legendEls = answers.map(({text, color}, i) => {
+			return <tr key={`legend${i}`} onClick={() => onSelect(i)}>
+				<td><div className="legend-color" style={{backgroundColor: color}}></div></td>
+				<td><span className="legend-text">{text}</span></td>
+			</tr>;
 		});
 		
-		const data = {
-			labels,
-			series,
-			colors,
-		};
-
-		//new Chartist.Pie('.' + className, data);
+		return <div className={'poll-card' + (onSelect ? ' selectable' : '')}>
+			<h3>{question}</h3>
+			<div className="poll-card-answers">
+				{answerEls}
+			</div>
+			<table className="poll-card-legend"><tbody>
+				{legendEls}
+			</tbody></table>
+		</div>;
 	}
-}
-
-export default PollCard;
-
-
-function getRandomColor() {
-	let letters = '0123456789ABCDEF'.split('');
-	let color = '#';
-	for(let i = 0; i < 6; i++) {
-		color += letters[Math.floor(Math.random() * 16)];
-	}
-	return color;
 }

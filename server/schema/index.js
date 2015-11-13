@@ -1,120 +1,258 @@
 import {
+	GraphQLInputObjectType,
 	GraphQLObjectType,
 	GraphQLSchema,
 	GraphQLList,
 	GraphQLString,
-	GraphQLInt
+	GraphQLInt,
+	GraphQLBoolean,
+	GraphQLID,
+	GraphQLNonNull
 } from 'graphql';
 
-import {
-	nodeDefinitions,
-	fromGlobalId,
-	globalIdField,
-	connectionDefinitions,
-	connectionArgs
-} from 'graphql-relay';
+
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import promisify from 'promisify-any';
 
 import {
-	User,
-	Poll,
 	getUser,
+	getUserByUsername,
+	addUser,
 	getPoll,
-	hotPolls
-} from './data';
+	getHotPolls,
+	getUserPolls,
+	addPoll,
+	removePoll,
+	voteForAnswer
+} from '../db/mongo';
+
+import config from '../config';
 
 
-let {nodeInterface, nodeField} = nodeDefinitions(
-	globalId => {
-		let {type, id} = fromGlobalId(globalId);
-		switch(type) {
-		case 'User':
-			return getUser(id);
-		case 'Poll':
-			return getPoll()
-		}
-	},
-	obj => {
-		if(obj instanceof User) return UserType;
-		if(obj instanceof Poll) return PollType;
-	}
-);
+const MONTH = 30 * 24 * 60 * 60;
+
+const genSalt = promisify(bcrypt.genSalt);
+const compare = promisify(bcrypt.compare);
+const hash = promisify(bcrypt.hash);
 
 
 const AnswerType = new GraphQLObjectType({
 	name: 'Answer',
 	fields: {
-		text: {type: GraphQLString},
-		color: {type: GraphQLString},
-		votes: {type: GraphQLInt},
+		text: {type: new GraphQLNonNull(GraphQLString)},
+		color: {type: new GraphQLNonNull(GraphQLString)},
+		votes: {type: new GraphQLNonNull(GraphQLInt)}
+	}
+});
+const AnswerInputType = new GraphQLInputObjectType({
+	name: 'AnswerInput',
+	fields: {
+		text: {type: new GraphQLNonNull(GraphQLString)},
+		color: {type: new GraphQLNonNull(GraphQLString)}
 	}
 });
 
 const PollType = new GraphQLObjectType({
 	name: 'Poll',
 	fields: {
-		id: globalIdField('Poll'),
-		question: {type: GraphQLString},
-		answers: {type: AnswerType},
-	},
-	interfaces: [nodeInterface]
+		id: {type: GraphQLID},
+		question: {type: new GraphQLNonNull(GraphQLString)},
+		answers: {type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(AnswerType)))}
+	}
 });
-
-
-const {
-	connectionType: PollsConnection
-} = connectionDefinitions({
-	name: 'Poll',
-	nodeType: PollType,
+const PollInputType = new GraphQLInputObjectType({
+	name: 'PollInput',
+	fields: {
+		question: {type: new GraphQLNonNull(GraphQLString)},
+		answers: {type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(AnswerInputType)))}
+	}
 });
 
 const UserType = new GraphQLObjectType({
 	name: 'User',
 	fields: {
-		id: globalIdField('User'),
-		username: {type: GraphQLString},
-		polls: {
-			type: PollsConnection,
-			args: connectionArgs,
-		}
-	},
-	interfaces: [nodeInterface]
+		id: {type: GraphQLID},
+		username: {type: new GraphQLNonNull(GraphQLString)},
+		//polls: {type: PollsConnection} // TODO
+	}
 });
 
 
-const PollsType = new GraphQLObjectType({
-	name: 'Polls',
+const Polls = new GraphQLObjectType({
+	name: 'PollQueries',
 	fields: {
+		mine: {
+			type: new GraphQLList(PollType),
+			resolve(parent, args, {rootValue: reqUser}) {
+				return getUserPolls(reqUser.id);
+			}
+		},
 		hot: {
 			type: new GraphQLList(PollType),
-			description: 'Hottest Polls'
+			resolve(parent) {
+				return getHotPolls();
+			}
 		},
+		poll: {
+			type: PollType,
+			args: {
+				id: {type: new GraphQLNonNull(GraphQLID)}
+			},
+			resolve(reqUser, {id}) {
+				return getPoll(id);
+			}
+		}
 	}
 });
 
-let Query = new GraphQLObjectType({
-	name: 'Query',
+const PollMutations = new GraphQLObjectType({
+	name: 'PollMutations',
 	fields: {
-		me: {
-			type: UserType,
-			resolve() {
-				//console.log('me', arguments)
-				// TODO: Get request information, like req.user
-				return {id: 'fdsaf', username: 'down'};
+		create: {
+			type: PollType,
+			args: {
+				poll: {type: new GraphQLNonNull(PollInputType)}
+			},
+			resolve(_, {poll}, {rootValue: reqUser}) {
+				if(!reqUser.id) return;
+				return addPoll(reqUser.id, poll);
 			}
 		},
-		polls: {
-			type: PollsType,
-			resolve() {
-				return {hot: hotPolls};
+		remove: {
+			type: GraphQLBoolean,
+			args: {
+				id: {type: new GraphQLNonNull(GraphQLID)}
+			},
+			resolve(_, {id}, {rootValue: reqUser}) {
+				console.log('removePoll', reqUser, id);
+				return removePoll(id, reqUser.id);
 			}
 		},
-		node: nodeField
+		vote: {
+			type: PollType,
+			args: {
+				pollId: {type: new GraphQLNonNull(GraphQLID)},
+				answerIndex: {type: new GraphQLNonNull(GraphQLInt)}
+			},
+			resolve(_, {pollId, answerIndex}, {rootValue: reqUser}) {
+				return voteForAnswer(pollId, answerIndex).then(() => {
+					return getPoll(pollId);
+				});
+			}
+		}
 	}
 });
-
 
 export default new GraphQLSchema({
-	query: Query
+	query: new GraphQLObjectType({
+		name: 'Query',
+		fields: {
+			me: {
+				type: UserType,
+				resolve(reqUser) {
+					if(reqUser.id) return getUser(reqUser.id);
+				}
+			},
+			polls: {
+				type: Polls,
+				resolve() {
+					return {};
+				}
+			}
+		}
+	}),
+	mutation: new GraphQLObjectType({
+		name: 'Mutation',
+		fields: {
+			login: {
+				type: new GraphQLObjectType({
+					name: 'LoginResult',
+					fields: {
+						token: {type: GraphQLString}
+					}
+				}),
+				args: {
+					username: {type: new GraphQLNonNull(GraphQLString)},
+					password: {type: new GraphQLNonNull(GraphQLString)}
+				},
+				fields: {
+					token: {type: GraphQLString}
+				},
+				resolve(reqUser, {username, password}) {
+					return getUserByUsername(username)
+					.then(user => {
+						if(user) { // Existing user
+							return compare(password, user.auth_hash)
+							.then(matches => {
+								if(matches) return createUserToken(user);
+							});
+						} else { // Create new user
+							return genSalt(config.bcrypt_strength)
+							.then(salt => {
+								return hash(password, salt);
+							})
+							.then(auth_hash => {
+								return addUser({username, auth_hash}).then(user => {
+									return createUserToken(user);
+								});
+							});
+						}
+					})
+					.then(token => {
+						return {token};
+					});
+				},
+			},
+			createPoll: {
+				type: PollType,
+				args: {
+					poll: {type: new GraphQLNonNull(PollInputType)}
+				},
+				resolve(reqUser, {poll}) {
+					console.log('createPoll', reqUser, poll)
+					if(!reqUser.id) return;
+					return addPoll(reqUser.id, poll);
+				}
+			},
+			removePoll: {
+				type: GraphQLBoolean,
+				args: {
+					id: {type: new GraphQLNonNull(GraphQLString)}
+				},
+				resolve(reqUser, {id}) {
+					console.log('removePoll', reqUser, id);
+					return removePoll(id, reqUser.id);
+				}
+			},
+			polls: {
+				type: PollMutations,
+				resolve() {
+					return {};
+				}
+			}
+		}
+	})
 });
 
-// TODO: Limit the number of answers on a poll to 10 or something
+
+function createUserToken(user) {
+	let {
+		id,
+		username,
+		scope
+	} = user;
+	
+	return jwt.sign(
+		{
+			id,
+			username,
+			scope
+		},
+		config.jwtSecret,
+		{
+			algorithm: 'HS256',
+			expiresIn: MONTH
+		}
+	);
+}

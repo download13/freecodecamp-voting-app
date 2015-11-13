@@ -12,9 +12,14 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'babel-loader',
+                exclude: /(node_modules)/,
                 query: {
-                    stage: 0,
-                    plugins: [path.join(__dirname, 'babel-relay-plugin')]
+                    presets: ['es2015', 'react'],
+                    plugins: [
+                        'syntax-object-rest-spread',
+                        'transform-object-rest-spread'
+                    ],
+                    cacheDirectory: true
                 }
             }
         ]

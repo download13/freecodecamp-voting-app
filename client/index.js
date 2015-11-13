@@ -1,61 +1,82 @@
 import React from 'react';
-import {render} from 'react-dom';
-import {Router} from 'react-router';
-import createBrowserHistory from 'history/lib/createBrowserHistory';
-import Relay from 'react-relay';
-import ReactRouterRelay from 'react-router-relay';
+import ReactDOM from 'react-dom';
+import {ReduxRouter} from 'redux-router';
+import {Route, IndexRoute} from 'react-router';
+import {Provider} from 'react-redux';
 
-import createLoginStore from './stores/login';
-import createRemoteStore from './stores/remote';
+import createStore from './state/store';
+import actions from './state/actions';
 
 import Root from './containers/root';
 import Home from './containers/home';
 import Login from './containers/login';
 import Dashboard from './containers/dashboard';
-
-
-const loginStore = createLoginStore();
-
-loginStore.onChange(() => {
-	console.log('loginStore change');
-	Relay.injectNetworkLayer(
-		new Relay.DefaultNetworkLayer('/graphql', {
-			headers: {
-				'Content-Type': 'application/graphql',
-				Authorization: loginStore.getToken()
-			}
-		})
-	);
-});
+import Poll from './containers/poll';
+import Settings from './containers/settings';
+import CreatePoll from './containers/create-poll';
+import About from './containers/about';
 
 
 function createApp() {
-	const remoteStore = createRemoteStore(loginStore);
+	const store = createStore();
 	
-	render(
-		<Router
-			history={createBrowserHistory()}
-			createElement={ReactRouterRelay.createElement}
-			routes={{
-				path: '/',
-				component: Root,
-				queries: {
-					user: () => Relay.QL`query { me }`
-				},
-				indexRoute: {
-					component: Home,
-					queries: {
-						polls: () => Relay.QL`query { polls }`
-					},
-				},
-				childRoutes: [
-					{path: 'login', component: Login},
-					{path: 'dashboard', component: Dashboard}
-				]
-			}}
-		/>,
-		document.querySelector('#root')
-	);
+	const ensureAuthed = (nextState, replaceState) => {
+		if(!store.getState().auth.token) {
+			replaceState({nextPath: nextState.location.pathname}, '/login');
+		}
+	};
+
+	return <Provider store={store}>
+		<ReduxRouter>
+			<Route
+				path="/"
+				component={Root}
+			>
+				<Route
+					path="login"
+					component={Login}
+					onEnter={(nextState, replaceState) => {
+						if(store.getState().auth.token) {
+							replaceState(null, '/dashboard');
+						}
+					}}
+				/>
+				<Route
+					path="logout"
+					onEnter={(nextState, replaceState) => {
+						store.dispatch(actions.logout());
+						replaceState(null, '/');
+					}}
+				/>
+				
+				<IndexRoute component={Home} />
+				<Route
+					path="create"
+					component={CreatePoll}
+					onEnter={ensureAuthed}
+				/>
+				<Route
+					path="dashboard"
+					component={Dashboard}
+					onEnter={ensureAuthed}
+				/>
+				<Route
+					path="poll/:id"
+					component={Poll}
+				/>
+				<Route
+					path="settings"
+					component={Settings}
+					onEnter={ensureAuthed}
+				/>
+				<Route
+					path="about"
+					component={About}
+				/>
+			</Route>
+		</ReduxRouter>
+	</Provider>;
 }
 
-createApp();
+let app = createApp();
+ReactDOM.render(app, document.querySelector('#root'));
